@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>スーパーファミコン・モザイククイズ</title>
+    <style>
+        :root {
+            --primary-blue: #007bff;
+            --bg-gray: #f5f5f5;
+            --border-color: #ddd;
+        }
+
+        body { font-family: sans-serif; text-align: center; background: var(--bg-gray); margin: 0; }
+        .container { max-width: 1200px; margin: 0 auto; background: #fff; padding: 20px; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+        
+        .header { width: 100%; border-bottom: 2px solid var(--primary-blue); margin-bottom: 20px; padding-bottom: 10px; }
+        .score-info { font-size: 1.1em; font-weight: bold; margin: 10px 0; }
+
+        .quiz-card { width: 100%; border: 1px solid var(--border-color); background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        
+        .canvas-container { width: 100%; height: 640px; background: #000; display: flex; align-items: center; justify-content: center; }
+        canvas { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+
+        .controls-row { 
+            padding: 15px; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            gap: 15px; 
+            background: #f9f9f9; 
+            border-bottom: 1px solid #eee;
+            flex-wrap: wrap;
+        }
+        
+        .hint-group { display: flex; gap: 5px; }
+        
+        .hint-btn { padding: 8px 12px; cursor: pointer; border: 1px solid #ccc; background: #eee; border-radius: 4px; font-size: 13px; }
+        .hint-btn.active { background: #ffc107; border-color: #ffa000; font-weight: bold; }
+        /* 無効化されたボタンのスタイル */
+        .hint-btn:disabled:not(.active) { opacity: 0.4; cursor: not-allowed; background: #ddd; }
+
+        .main-btn { padding: 8px 20px; cursor: pointer; border: none; border-radius: 4px; color: white; font-weight: bold; font-size: 13px; min-width: 120px; }
+        .giveup-btn { background: #999; }
+        .next-btn { background: var(--primary-blue); }
+
+        .input-area { padding: 20px; }
+        .card-input { width: 90%; max-width: 500px; padding: 12px; border: 2px solid #ddd; border-radius: 4px; font-size: 18px; outline: none; text-align: center; }
+        .card-input:focus { border-color: var(--primary-blue); }
+
+        #message { height: 30px; margin: 15px 0; font-weight: bold; font-size: 1.2em; }
+        
+        .result-screen { display: none; text-align: center; padding: 40px 20px; }
+        .result-score { font-size: 3em; color: var(--primary-blue); margin: 20px 0; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h2>スーパーファミコン・モザイククイズ</h2>
+        <div class="score-info">
+            スコア: <span id="totalScore">0</span> pt | 進行度: <span id="currentNum">1</span> / <span id="totalNum">--</span>
+        </div>
+    </div>
+
+    <div id="quizArea" style="width: 100%;">
+        <div class="quiz-card">
+            <div class="canvas-container">
+                <canvas id="mainCanvas"></canvas>
+            </div>
+            
+            <div class="controls-row">
+                <div class="hint-group">
+                    <button class="hint-btn active" id="btn-0" onclick="updateMosaic(0)">むずかしい (3pt)</button>
+                    <button class="hint-btn" id="btn-1" onclick="updateMosaic(1)">ふつう (2pt)</button>
+                    <button class="hint-btn" id="btn-2" onclick="updateMosaic(2)">かんたん (1pt)</button>
+                </div>
+                <div class="action-group">
+                    <button class="main-btn giveup-btn" id="giveupBtn">わからない</button>
+                    <button class="main-btn next-btn" id="nextBtn" style="display:none;">次の問題へ</button>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <input type="text" id="answerInput" class="card-input" placeholder="作品名は？" autocomplete="off">
+                <div id="message"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="resultArea" class="result-screen">
+        <h3>全問終了！あなたのスコアは…</h3>
+        <div class="result-score"><span id="finalScore">0</span> pt</div>
+        <p>正解数: <span id="correctCount">0</span></p>
+        <button class="main-btn next-btn" onclick="location.reload()">もう一度挑戦する</button>
+    </div>
+</div>
+
+<script>
+    const quizData = [
+        { display: "アクトレイザー", accept: ["あくとれいざー"], image: "sfc/act.jpg" },
+        { display: "ブレスオブファイア 竜の戦士", accept: ["ぶれすおぶふぁいあ", "ぶれすおぶふぁいありゅうのせんし"], image: "sfc/bf.jpg" },
+        { display: "クロックタワー", accept: ["くろっくたわー"], image: "sfc/clo.jpg" },
+        { display: "魂斗羅スピリッツ", accept: ["こんとらすぴりっつ"], image: "sfc/contra.jpg" },
+        { display: "クロノトリガー", accept: ["くろのとりがー"], image: "sfc/ct.jpg" },
+        { display: "ドラゴンボールZ 超武闘伝", accept: ["どらごんぼーるぜっとすーぱーぶとうでん"], image: "sfc/dbz.jpg" },
+        { display: "スーパードンキーコング", accept: ["すーぱーどんきーこんぐ"], image: "sfc/dk.jpg" },
+        { display: "スーパードンキーコング2 ディクシー&ディディー", accept: ["すーぱーどんきーこんぐ2", "すーぱーどんきーこんぐ2でぃでぃーあんどでぃくしー"], image: "sfc/dk2.jpg" },
+        { display: "ドラゴンクエストV 天空の花嫁", accept: ["どらごんくえすと5", "どらごんくえすと5てんくうのはなよめ"], image: "sfc/dq5.jpg" },
+        { display: "ドラゴンクエストVI 幻の大地", accept: ["どらごんくえすと6", "どらごんくえすと6まぼろしのだいち"], image: "sfc/dq6.jpg" },
+        { display: "ファイアーエムブレム 紋章の謎", accept: ["ふぁいあーえむぶれむもんしょうのなぞ"], image: "sfc/fe.jpg" },
+        { display: "ファイナルファンタジーIV", accept: ["ふぁいなるふぁんたじー4"], image: "sfc/ff4.jpg" },
+        { display: "ファイナルファンタジーVI", accept: ["ふぁいなるふぁんたじー6"], image: "sfc/ff6.jpg" },
+        { display: "スターフォックス", accept: ["すたーふぉっくす"], image: "sfc/fox.jpg" },
+        { display: "F-ZERO", accept: ["えふぜろ"], image: "sfc/fzero.jpg" },
+        { display: "学校であった怖い話", accept: ["がっこうであったこわいはなし"], image: "sfc/gak.jpg" },
+        { display: "がんばれゴエモン ～ゆき姫救出絵巻～", accept: ["がんばれごえもんゆきひめきゅうしゅつえまき"], image: "sfc/goemon.jpg" },
+        { display: "がんばれゴエモン2 ～奇天烈将軍マッギネス～", accept: ["がんばれごえもん2きてれつしょうぐんまっぎねす"], image: "sfc/goemon2.jpg" },
+        { display: "ごきんじょ冒険隊", accept: ["ごきんじょぼうけんたい"], image: "sfc/goki.jpg" },
+        { display: "グラディウスIII", accept: ["ぐらでぃうす3"], image: "sfc/gra3.jpg" },
+        { display: "イーハトーヴォ物語", accept: ["いーはとーヴぉものがたり", "いーはとーゔぉものがたり"], image: "sfc/iha.jpg" },
+        { display: "大貝獣物語", accept: ["だいかいじゅうものがたり"], image: "sfc/kaiju.jpg" },
+        { display: "かまいたちの夜", accept: ["かまいたちのよる"], image: "sfc/kama.jpg" },
+        { display: "星のカービィ3", accept: ["ほしのかーびぃ3"], image: "sfc/kb3.jpg" },
+        { display: "カービィボウル", accept: ["かーびぃぼうる"], image: "sfc/kbb.jpg" },
+        { display: "星のカービィ スーパーデラックス", accept: ["ほしのかーびぃすーぱーでらっくす"], image: "sfc/kbsd.jpg" },
+        { display: "ライブ・ア・ライブ", accept: ["らいぶあらいぶ"], image: "sfc/lal.jpg" },
+        { display: "ミスティックアーク", accept: ["みすてぃっくあーく"], image: "sfc/ma.jpg" },
+        { display: "摩訶摩訶", accept: ["まかまか"], image: "sfc/mak.jpg" },
+        { display: "超魔界村", accept: ["ちょうまかいむら"], image: "sfc/makai.jpg" },
+        { display: "スーパーマリオコレクション", accept: ["すーぱーまりおこれくしょん"], image: "sfc/mco.jpg" },
+        { display: "スーパーメトロイド", accept: ["すーぱーめとろいど"], image: "sfc/metroid.jpg" },
+        { display: "メタルマックス2", accept: ["めたるまっくす2"], image: "sfc/mm2.jpg" },
+        { display: "新桃太郎伝説", accept: ["しんももたろうでんせつ"], image: "sfc/momo.jpg" },
+        { display: "マリオペイント", accept: ["まりおぺいんと"], image: "sfc/mpe.jpg" },
+        { display: "マリオのスーパーピクロス", accept: ["まりおのすーぱーぴくろす"], image: "sfc/mpi.jpg" },
+        { display: "スーパーマリオRPG", accept: ["すーぱーまりおあーるぴーじー"], image: "sfc/mrpg.jpg" },
+        { display: "ヨッシーのクッキー", accept: ["よっしーのくっきー"], image: "sfc/myc.jpg" },
+        { display: "スーパーマリオ ヨッシーアイランド", accept: ["すーぱーまりおよっしーあいらんど", "よっしーあいらんど"], image: "sfc/myo.jpg" },
+        { display: "弟切草", accept: ["おとぎりそう"], image: "sfc/oto.jpg" },
+        { display: "す～ぱ～ぷよぷよ", accept: ["すーぱーぷよぷよ", "す～ぱ～ぷよぷよ"], image: "sfc/puyo.jpg" },
+        { display: "ロックマン7 宿命の対決!", accept: ["ろっくまん7", "ろっくまん7しゅくめいのたいけつ"], image: "sfc/roc7.jpg" },
+        { display: "ロックマン&フォルテ", accept: ["ろっくまんあんどふぉるて"], image: "sfc/rocf.jpg" },
+        { display: "ロマンシング サ・ガ", accept: ["ろまんしんぐさが"], image: "sfc/rs.jpg" },
+        { display: "ロマンシング サ・ガ3", accept: ["ろまんしんぐさが3"], image: "sfc/rs3.jpg" },
+        { display: "聖剣伝説2", accept: ["せいけんでんせつ2"], image: "sfc/sd2.jpg" },
+        { display: "聖剣伝説3", accept: ["せいけんでんせつ3"], image: "sfc/sd3.jpg" },
+        { display: "セプテントリオン", accept: ["せぷてんとりおん"], image: "sfc/sep.jpg" },
+        { display: "ストリートファイターII -The World Warrior-", accept: ["すとりーとふぁいたー2"], image: "sfc/sf2.jpg" },
+        { display: "スーパーマリオワールド", accept: ["すーぱーまりおわーるど"], image: "sfc/smw.jpg" },
+        { display: "スターオーシャン", accept: ["すたーおーしゃん"], image: "sfc/so.jpg" },
+        { display: "SimCity", accept: ["しむしてぃ", "しむしてぃー"], image: "sfc/ss.jpg" },
+        { display: "天地創造", accept: ["てんちそうぞう"], image: "sfc/ten.jpg" },
+        { display: "タクティクスオウガ", accept: ["たくてぃくすおうが"], image: "sfc/to.jpg" },
+        { display: "テイルズ オブ ファンタジア", accept: ["ているずおぶふぁんたじあ"], image: "sfc/top.jpg" },
+        { display: "パイロットウイングス", accept: ["ぱいろっとういんぐす", "ぱいろっとうぃんぐす"], image: "sfc/wings.jpg" },
+        { display: "ロックマンX", accept: ["ろっくまんえっくす"], image: "sfc/x.jpg" },
+        { display: "ロックマンX2", accept: ["ろっくまんえっくす2"], image: "sfc/x2.jpg" },
+        { display: "ロックマンX3", accept: ["ろっくまんえっくす3"], image: "sfc/x3.jpg" },
+        { display: "ゼルダの伝説 神々のトライフォース", accept: ["ぜるだのでんせつかみがみのとらいふぉーす"], image: "sfc/zelda.jpg" },
+    ];
+
+    const HINT_LEVELS = [
+        { size: 0.02, score: 3 }, 
+        { size: 0.04, score: 2 }, 
+        { size: 0.08, score: 1 }, 
+        { size: 1.00, score: 0 }
+    ];
+
+    let shuffledIndices = [];
+    let currentIndex = 0;
+    let totalScore = 0;
+    let correctCount = 0;
+    let currentHintLevel = 0;
+    let isAnswered = false;
+    let currentImg = new Image();
+
+    const canvas = document.getElementById('mainCanvas');
+    const ctx = canvas.getContext('2d');
+    const inputEl = document.getElementById('answerInput');
+    const messageEl = document.getElementById('message');
+    const nextBtn = document.getElementById('nextBtn');
+    const giveupBtn = document.getElementById('giveupBtn');
+
+    function init() {
+        shuffledIndices = [...Array(quizData.length).keys()].sort(() => Math.random() - 0.5);
+        currentIndex = 0;
+        totalScore = 0;
+        correctCount = 0;
+        document.getElementById('totalNum').textContent = quizData.length;
+        loadQuestion();
+    }
+
+function loadQuestion() {
+        isAnswered = false;
+        currentHintLevel = 0; 
+        inputEl.value = '';
+        inputEl.disabled = false;
+        inputEl.placeholder = "作品名は？";
+        messageEl.textContent = '';
+        nextBtn.style.display = 'none';
+        
+        // ボタンの文言をリセット（念のため）
+        nextBtn.textContent = "次の問題へ";
+        giveupBtn.style.display = 'inline-block';
+        
+        document.getElementById('currentNum').textContent = currentIndex + 1;
+        
+        const dataIndex = shuffledIndices[currentIndex];
+        currentImg = new Image();
+        currentImg.src = quizData[dataIndex].image;
+        currentImg.onload = () => updateMosaic(0);
+        
+        inputEl.focus();
+    }
+
+    function updateMosaic(level) {
+        if (isAnswered) return;
+        // 不可逆処理：現在のレベルより低い（モザイクが強い）レベルには戻さない
+        if (level < currentHintLevel) return;
+
+        currentHintLevel = level;
+        updateHintButtons();
+
+        const scale = HINT_LEVELS[level].size;
+        const w = currentImg.width * scale;
+        const h = currentImg.height * scale;
+        
+        canvas.width = w;
+        canvas.height = h;
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(currentImg, 0, 0, w, h);
+    }
+
+    function updateHintButtons() {
+        const btns = document.querySelectorAll('.hint-btn');
+        btns.forEach((b, i) => {
+            b.classList.toggle('active', i === currentHintLevel);
+            
+            // 解答済みならすべて無効
+            if (isAnswered) {
+                b.disabled = true;
+            } else {
+                // 不可逆：現在のヒントレベルより数値が小さい（モザイクが強い）ボタンを無効化
+                b.disabled = (i < currentHintLevel);
+            }
+        });
+    }
+
+    inputEl.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') checkAnswer();
+    });
+
+    giveupBtn.onclick = () => reveal(false);
+
+    function checkAnswer() {
+        if (isAnswered) return;
+        const val = inputEl.value.trim();
+        if (!val) return;
+
+        const data = quizData[shuffledIndices[currentIndex]];
+        if (data.accept.includes(val)) {
+            correctCount++;
+            totalScore += HINT_LEVELS[currentHintLevel].score;
+            reveal(true);
+        } else {
+            inputEl.value = '';
+            messageEl.style.color = 'red';
+            messageEl.textContent = '不正解！';
+            setTimeout(() => { if(!isAnswered) messageEl.textContent = ''; }, 1000);
+        }
+    }
+
+function reveal(isCorrect) {
+        isAnswered = true;
+        inputEl.disabled = true;
+        giveupBtn.style.display = 'none';
+        nextBtn.style.display = 'inline-block';
+        
+        // ★最後の問題かどうかを判定してボタンの文言を変更
+        if (currentIndex === quizData.length - 1) {
+            nextBtn.textContent = "最終結果へ";
+        } else {
+            nextBtn.textContent = "次の問題へ";
+        }
+        
+        updateHintButtons(); 
+
+        canvas.width = currentImg.width;
+        canvas.height = currentImg.height;
+        ctx.imageSmoothingEnabled = true;
+        ctx.drawImage(currentImg, 0, 0);
+
+        const data = quizData[shuffledIndices[currentIndex]];
+        messageEl.style.color = isCorrect ? 'green' : '#666';
+        messageEl.textContent = isCorrect ? `正解！(+${HINT_LEVELS[currentHintLevel].score}pt)` : `正解は：${data.display}`;
+        
+        document.getElementById('totalScore').textContent = totalScore;
+        nextBtn.focus();
+    }
+
+    nextBtn.onclick = () => {
+        currentIndex++;
+        if (currentIndex < quizData.length) {
+            loadQuestion();
+        } else {
+            showFinalResult();
+        }
+    };
+
+    function showFinalResult() {
+        document.getElementById('quizArea').style.display = 'none';
+        document.getElementById('resultArea').style.display = 'block';
+        document.getElementById('finalScore').textContent = totalScore;
+        document.getElementById('correctCount').textContent = `${correctCount} / ${quizData.length}`;
+    }
+
+    init();
+</script>
+</body>
+</html>

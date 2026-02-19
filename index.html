@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>モザイククイズ</title>
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --bg-gray: #f8f9fa;
+            --text-dark: #333;
+        }
+
+        body {
+            font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+            background-color: var(--bg-gray);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 0;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .hero h1 { margin: 0; font-size: 2.5em; }
+        .hero p { margin: 10px 0 0; opacity: 0.9; }
+
+        .container {
+            max-width: 500px;
+            margin: -40px auto 40px;
+            padding: 0 20px;
+        }
+
+        .quiz-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .quiz-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+            display: flex; flex-direction: column;
+        }
+
+        .quiz-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+        }
+
+        /* 画像表示エリアのスタイル */
+        .card-image {
+            height: 240px;
+            background-color: #333; /* 画像がない時の背景色 */
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* 画像の上に薄い暗幕をひいて文字を見やすくする（オプション） */
+        .card-image::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.2);
+        }
+
+        .card-body { padding: 20px; flex-grow: 1; }
+        .card-body h2 { margin: 0 0 10px; font-size: 1.4em; color: var(--primary-color); }
+        .card-body p { margin: 0; font-size: 0.95em; color: #666; line-height: 1.5; }
+
+        .card-footer {
+            padding: 15px 20px;
+            background: #fdfdfd;
+            border-top: 1px solid #eee;
+            text-align: right;
+            font-weight: bold;
+            font-size: 0.9em;
+            color: var(--primary-color);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            margin-bottom: 10px;
+            background: #eee;
+        }
+
+        footer { text-align: center; padding: 40px; color: #999; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+
+<div class="hero">
+    <h1>モザイククイズ</h1>
+    <p>あなたの知識と「眼力」を試そう！</p>
+</div>
+
+<div class="container">
+    <div class="quiz-grid">
+
+        <a href="sfc.html" class="quiz-card">
+            <div class="card-image" style="background-image: url('sfc/sfc.png');">
+            </div>
+            <div class="card-body">
+                <span class="badge">ゲーム</span>
+                <h2>スーパーファミコン・パッケージクイズ</h2>
+                <p>ひらがなと半角数字で答えてください</p>
+            </div>
+            <div class="card-footer">挑戦する →</div>
+        </a>
+
+    </div>
+</div>
+
+</body>
+</html>
