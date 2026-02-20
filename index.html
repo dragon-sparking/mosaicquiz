@@ -30,15 +30,24 @@
         .hero p { margin: 10px 0 0; opacity: 0.9; }
 
         .container {
-            max-width: 500px;
+            max-width: 1000px; /* 3枚並べるために幅を広げました */
             margin: -40px auto 40px;
             padding: 0 20px;
         }
 
         .quiz-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            /* 横に3つ固定、画面が狭いときは自動調整 */
+            grid-template-columns: repeat(3, 1fr); 
             gap: 25px;
+        }
+
+        /* スマホなど画面が狭い時のレスポンシブ対応 */
+        @media (max-width: 800px) {
+            .quiz-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 500px) {
+            .quiz-grid { grid-template-columns: 1fr; }
         }
 
         .quiz-card {
@@ -52,34 +61,42 @@
             display: flex; flex-direction: column;
         }
 
-        .quiz-card:hover {
+        .quiz-card:not(.pending):hover {
             transform: translateY(-5px);
             box-shadow: 0 15px 30px rgba(0,0,0,0.15);
         }
 
-        /* 画像表示エリアのスタイル */
-        .card-image {
-            height: 240px;
-            background-color: #333; /* 画像がない時の背景色 */
-            background-size: cover;
-            background-position: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
+        /* 未実装カードのスタイル */
+        .quiz-card.pending {
+            background: #eee;
+            box-shadow: none;
+            border: 2px dashed #ccc;
+            cursor: default;
         }
 
-        /* 画像の上に薄い暗幕をひいて文字を見やすくする（オプション） */
+.card-image {
+    width: 100%;           /* カードの幅いっぱいに広げる */
+    aspect-ratio: 16 / 9;  /* 縦横比を固定（お好みで 3/2 や 4/3 に変更可） */
+    background-color: #333;
+    background-size: contain; /* 画像を切り取らずに枠内に収める */
+    background-repeat: no-repeat; /* 画像を繰り返さない */
+    background-position: center;  /* 中央に配置 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
         .card-image::after {
             content: "";
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.2);
+            background: rgba(0,0,0,0.1);
         }
 
         .card-body { padding: 20px; flex-grow: 1; }
-        .card-body h2 { margin: 0 0 10px; font-size: 1.4em; color: var(--primary-color); }
-        .card-body p { margin: 0; font-size: 0.95em; color: #666; line-height: 1.5; }
+        .card-body h2 { margin: 0 0 10px; font-size: 1.2em; color: var(--primary-color); }
+        .card-body p { margin: 0; font-size: 0.85em; color: #666; line-height: 1.5; }
 
         .card-footer {
             padding: 15px 20px;
@@ -114,18 +131,40 @@
     <div class="quiz-grid">
 
         <a href="sfc.html" class="quiz-card">
-            <div class="card-image" style="background-image: url('sfc/sfc.png');">
-            </div>
+            <div class="card-image" style="background-image: url('sfc/sfc.png');"></div>
             <div class="card-body">
                 <span class="badge">ゲーム</span>
-                <h2>スーパーファミコン・パッケージクイズ</h2>
-                <p>ひらがなと半角数字で答えてください</p>
+                <h2>SFC パッケージ</h2>
+                <p>SFCソフトのパッケージ画像からゲームタイトルを当てよう</p>
+            </div>
+            <div class="card-footer">挑戦する →</div>
+        </a>
+        
+        <a href="switch.html" class="quiz-card">
+            <div class="card-image" style="background-image: url('switch/switch.png');"></div>
+            <div class="card-body">
+                <span class="badge">ゲーム</span>
+                <h2>Nintendo Switch ソフト</h2>
+                <p>ストアの画像からゲームタイトルを当てよう</p>
             </div>
             <div class="card-footer">挑戦する →</div>
         </a>
 
+        <div class="quiz-card pending">
+            <div class="card-image" style="background: #ddd;">
+                <span style="color: #999; font-weight: bold; z-index: 1;">COMING SOON</span>
+            </div>
+            <div class="card-body">
+                <span class="badge">???</span>
+                <h2 style="color: #999;">To Be Continued</h2>
+                <p>新しいクイズを準備中です。お楽しみに！</p>
+            </div>
+            <div class="card-footer" style="color: #999;">??? →</div>
+        </div>
+
     </div>
 </div>
+
 
 </body>
 </html>

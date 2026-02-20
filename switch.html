@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>SFCパッケージ・モザイククイズ</title>
+    <title>Switchソフト・モザイククイズ</title>
     <style>
         :root {
             --primary-blue: #007bff;
@@ -82,13 +82,15 @@
 
 <div class="container">
     <div class="header">
-        <h2>SFCパッケージ・モザイククイズ</h2>
+        <h2>Switchソフト・モザイククイズ</h2>
         <div class="score-info">
             スコア: <span id="totalScore">0</span> pt | 進行度: <span id="currentNum">1</span> / <span id="totalNum">--</span>
         </div>
         <div class="rule-note">
             ・<strong class="alert">ひらがな＋半角数字で答えてください</strong><br>
-            ・誤答、モザイク除去でポイントが減ります
+            ・誤答、モザイク除去でポイントが減ります<br>
+            ・Switch2用ソフトも出題されます<br>
+            ・Switch初出のソフトとは限りません<br>
         </div>
     </div>
 
@@ -127,72 +129,75 @@
 
 <script>
     const quizData = [
-        { display: "アクトレイザー", accept: ["あくとれいざー"], image: "sfc/act.jpg" },
-        { display: "ブレスオブファイア 竜の戦士", accept: ["ぶれすおぶふぁいあ", "ぶれすおぶふぁいありゅうのせんし"], image: "sfc/bf.jpg" },
-        { display: "クロックタワー", accept: ["くろっくたわー"], image: "sfc/clo.jpg" },
-        { display: "魂斗羅スピリッツ", accept: ["こんとらすぴりっつ"], image: "sfc/contra.jpg" },
-        { display: "クロノトリガー", accept: ["くろのとりがー"], image: "sfc/ct.jpg" },
-        { display: "ドラゴンボールZ 超武闘伝", accept: ["どらごんぼーるぜっとすーぱーぶとうでん"], image: "sfc/dbz.jpg" },
-        { display: "スーパードンキーコング", accept: ["すーぱーどんきーこんぐ"], image: "sfc/dk.jpg" },
-        { display: "スーパードンキーコング2 ディクシー&ディディー", accept: ["すーぱーどんきーこんぐ2", "すーぱーどんきーこんぐ2でぃでぃーあんどでぃくしー"], image: "sfc/dk2.jpg" },
-        { display: "ドラゴンクエストV 天空の花嫁", accept: ["どらごんくえすと5", "どらごんくえすと5てんくうのはなよめ"], image: "sfc/dq5.jpg" },
-        { display: "ドラゴンクエストVI 幻の大地", accept: ["どらごんくえすと6", "どらごんくえすと6まぼろしのだいち"], image: "sfc/dq6.jpg" },
-        { display: "ファイアーエムブレム 紋章の謎", accept: ["ふぁいあーえむぶれむもんしょうのなぞ"], image: "sfc/fe.jpg" },
-        { display: "ファイナルファンタジーIV", accept: ["ふぁいなるふぁんたじー4"], image: "sfc/ff4.jpg" },
-        { display: "ファイナルファンタジーVI", accept: ["ふぁいなるふぁんたじー6"], image: "sfc/ff6.jpg" },
-        { display: "スターフォックス", accept: ["すたーふぉっくす"], image: "sfc/fox.jpg" },
-        { display: "F-ZERO", accept: ["えふぜろ"], image: "sfc/fzero.jpg" },
-        { display: "学校であった怖い話", accept: ["がっこうであったこわいはなし"], image: "sfc/gak.jpg" },
-        { display: "がんばれゴエモン ～ゆき姫救出絵巻～", accept: ["がんばれごえもんゆきひめきゅうしゅつえまき"], image: "sfc/goemon.jpg" },
-        { display: "がんばれゴエモン2 ～奇天烈将軍マッギネス～", accept: ["がんばれごえもん2きてれつしょうぐんまっぎねす"], image: "sfc/goemon2.jpg" },
-        { display: "ごきんじょ冒険隊", accept: ["ごきんじょぼうけんたい"], image: "sfc/goki.jpg" },
-        { display: "グラディウスIII", accept: ["ぐらでぃうす3"], image: "sfc/gra3.jpg" },
-        { display: "イーハトーヴォ物語", accept: ["いーはとーヴぉものがたり", "いーはとーゔぉものがたり"], image: "sfc/iha.jpg" },
-        { display: "大貝獣物語", accept: ["だいかいじゅうものがたり"], image: "sfc/kaiju.jpg" },
-        { display: "かまいたちの夜", accept: ["かまいたちのよる"], image: "sfc/kama.jpg" },
-        { display: "星のカービィ3", accept: ["ほしのかーびぃ3"], image: "sfc/kb3.jpg" },
-        { display: "カービィボウル", accept: ["かーびぃぼうる"], image: "sfc/kbb.jpg" },
-        { display: "星のカービィ スーパーデラックス", accept: ["ほしのかーびぃすーぱーでらっくす"], image: "sfc/kbsd.jpg" },
-        { display: "ライブ・ア・ライブ", accept: ["らいぶあらいぶ"], image: "sfc/lal.jpg" },
-        { display: "ミスティックアーク", accept: ["みすてぃっくあーく"], image: "sfc/ma.jpg" },
-        { display: "摩訶摩訶", accept: ["まかまか"], image: "sfc/mak.jpg" },
-        { display: "超魔界村", accept: ["ちょうまかいむら"], image: "sfc/makai.jpg" },
-        { display: "スーパーマリオコレクション", accept: ["すーぱーまりおこれくしょん"], image: "sfc/mco.jpg" },
-        { display: "スーパーメトロイド", accept: ["すーぱーめとろいど"], image: "sfc/metroid.jpg" },
-        { display: "メタルマックス2", accept: ["めたるまっくす2"], image: "sfc/mm2.jpg" },
-        { display: "新桃太郎伝説", accept: ["しんももたろうでんせつ"], image: "sfc/momo.jpg" },
-        { display: "マリオペイント", accept: ["まりおぺいんと"], image: "sfc/mpe.jpg" },
-        { display: "マリオのスーパーピクロス", accept: ["まりおのすーぱーぴくろす"], image: "sfc/mpi.jpg" },
-        { display: "スーパーマリオRPG", accept: ["すーぱーまりおあーるぴーじー"], image: "sfc/mrpg.jpg" },
-        { display: "ヨッシーのクッキー", accept: ["よっしーのくっきー"], image: "sfc/myc.jpg" },
-        { display: "スーパーマリオ ヨッシーアイランド", accept: ["すーぱーまりおよっしーあいらんど", "よっしーあいらんど"], image: "sfc/myo.jpg" },
-        { display: "弟切草", accept: ["おとぎりそう"], image: "sfc/oto.jpg" },
-        { display: "す～ぱ～ぷよぷよ", accept: ["すーぱーぷよぷよ", "す～ぱ～ぷよぷよ"], image: "sfc/puyo.jpg" },
-        { display: "ロックマン7 宿命の対決!", accept: ["ろっくまん7", "ろっくまん7しゅくめいのたいけつ"], image: "sfc/roc7.jpg" },
-        { display: "ロックマン&フォルテ", accept: ["ろっくまんあんどふぉるて"], image: "sfc/rocf.jpg" },
-        { display: "ロマンシング サ・ガ", accept: ["ろまんしんぐさが"], image: "sfc/rs.jpg" },
-        { display: "ロマンシング サ・ガ3", accept: ["ろまんしんぐさが3"], image: "sfc/rs3.jpg" },
-        { display: "聖剣伝説2", accept: ["せいけんでんせつ2"], image: "sfc/sd2.jpg" },
-        { display: "聖剣伝説3", accept: ["せいけんでんせつ3"], image: "sfc/sd3.jpg" },
-        { display: "セプテントリオン", accept: ["せぷてんとりおん"], image: "sfc/sep.jpg" },
-        { display: "ストリートファイターII -The World Warrior-", accept: ["すとりーとふぁいたー2"], image: "sfc/sf2.jpg" },
-        { display: "スーパーマリオワールド", accept: ["すーぱーまりおわーるど"], image: "sfc/smw.jpg" },
-        { display: "スターオーシャン", accept: ["すたーおーしゃん"], image: "sfc/so.jpg" },
-        { display: "SimCity", accept: ["しむしてぃ", "しむしてぃー"], image: "sfc/ss.jpg" },
-        { display: "天地創造", accept: ["てんちそうぞう"], image: "sfc/ten.jpg" },
-        { display: "タクティクスオウガ", accept: ["たくてぃくすおうが"], image: "sfc/to.jpg" },
-        { display: "テイルズ オブ ファンタジア", accept: ["ているずおぶふぁんたじあ"], image: "sfc/top.jpg" },
-        { display: "パイロットウイングス", accept: ["ぱいろっとういんぐす", "ぱいろっとうぃんぐす"], image: "sfc/wings.jpg" },
-        { display: "ロックマンX", accept: ["ろっくまんえっくす"], image: "sfc/x.jpg" },
-        { display: "ロックマンX2", accept: ["ろっくまんえっくす2"], image: "sfc/x2.jpg" },
-        { display: "ロックマンX3", accept: ["ろっくまんえっくす3"], image: "sfc/x3.jpg" },
-        { display: "ゼルダの伝説 神々のトライフォース", accept: ["ぜるだのでんせつかみがみのとらいふぉーす"], image: "sfc/zelda.jpg" },
+        { display: "世界のアソビ大全51", accept: ["せかいのあそびたいぜんごじゅういち", "せかいのあそびたいぜん51", "せかいのあそびたいぜん"], image: "switch/51.webp" },
+        { display: "あつまれどうぶつの森", accept: ["あつまれどうぶつのもり", "あつもり"], image: "switch/adm.webp" },
+        { display: "ARMS", accept: ["あーむず"], image: "switch/arms.webp" },
+        { display: "ベヨネッタ", accept: ["べよねった"], image: "switch/bay.webp" },
+        { display: "ドンキーコングバナンザ", accept: ["どんきーこんぐばなんざ", "ばなんざ"], image: "switch/dkb.webp" },
+        { display: "ドンキーコング トロピカルフリーズ", accept: ["どんきーこんぐとろぴかるふりーず", "とろぴかるふりーず"], image: "switch/dkt.webp" },
+        { display: "ドラゴンクエストIII そして伝説へ…", accept: ["どらごんくえすと3", "どらくえ3", "どらごんくえすと3そしてでんせつへ"], image: "switch/dq3.jpg" },
+        { display: "ドラゴンクエストVII Reimagined", accept: ["どらごんくえすと7", "どらくえ7", "どらごんくえすと7りいまじんど"], image: "switch/dq7.jpg" },
+        { display: "ドラゴンクエストXI 過ぎ去りし時を求めて", accept: ["どらごんくえすと11", "どらくえ11", "どらごんくえすと11すぎさりしときをもとめて", "どらごんくえすと11すぎさりしときをもとめてえす"], image: "switch/dq11.jpg" },
+        { display: "ドラゴンクエストビルダーズ アレフガルドを復活せよ", accept: ["どらごんくえすとびるだーず", "どらごんくえすとびるだーずあれふがるどをふっかつせよ"], image: "switch/dqb.webp" },
+        { display: "ファイアーエムブレム エンゲージ", accept: ["ふぁいあーえむぶれむえんげーじ"], image: "switch/fee.webp" },
+        { display: "ファイアーエムブレム 風花雪月", accept: ["ふぁいあーえむぶれむふうかせつげつ"], image: "switch/fef.jpg" },
+        { display: "ヒューマンフォールフラット", accept: ["ひゅーまんふぉーるふらっと"], image: "switch/hff.webp" },
+        { display: "星のカービィ ディスカバリー", accept: ["ほしのかーびぃでぃすかばりー"], image: "switch/kbd.webp" },
+        { display: "カービィのエアライダー", accept: ["かーびぃのえあらいだー", "えあらいだー"], image: "switch/kbr.jpg" },
+
+        { display: "星のカービィ スターアライズ", accept: ["ほしのかーびぃすたーあらいず"], image: "switch/kbs.webp" },
+        { display: "ルイージマンション3", accept: ["るいーじまんしょん", "るいーじまんしょん3"], image: "switch/lm3.webp" },
+        { display: "マリオカート8 デラックス", accept: ["まりおかーと8でらっくす", "まりおかーと8"], image: "switch/mc8.jpg" },
+        { display: "マリオカート ワールド", accept: ["まりおかーとわーるど"], image: "switch/mcw.webp" },
+        { display: "桃太郎電鉄ワールド ～地球は希望でまわってる!～", accept: ["ももたろうでんてつわーるどちきゅうはきぼうでまわってる", "ももたろうでんてつわーるど"], image: "switch/mdw.webp" },
+        { display: "モンスターハンターライズ", accept: ["もんすたーはんたーらいず"], image: "switch/mhr.jpg" },
+        { display: "モンスターハンター ストーリーズ2", accept: ["もんすたーはんたーすとーりーず2"], image: "switch/mhs2.jpg" },
+        { display: "Minecraft", accept: ["まいんくらふと"], image: "switch/mk.webp" },
+        { display: "メトロイド ドレッド", accept: ["めとろいどどれっど"], image: "switch/mrd.webp" },
+        { display: "New ポケモンスナップ", accept: ["にゅー ぽけもんすなっぷ",  "ぽけもんすなっぷ"], image: "switch/npks.webp" },
+        { display: "OCTOPATH TRAVELER", accept: ["おくとぱすとらべらー"], image: "switch/ot.jpg" },
+        { display: "Overcooked! 2", accept: ["おーばーくっく2"], image: "switch/ovc2.webp" },
+        { display: "ペルソナ3 リロード", accept: ["ぺるそな3りろーど", "ぺるそな3"], image: "switch/p3.webp" },
+        { display: "ペルソナ5 ザ・ロイヤル", accept: ["ぺるそな5ざろいやる", "ぺるそな5"], image: "switch/p5.webp" },
+        { display: "ピクミン4", accept: ["ぴくみん4"], image: "switch/pk4.jpg" },
+        
+        { display: "Pokémon LEGENDS アルセウス", accept: ["ぽけもんれじぇんずあるせうす", "ぽけもんれじぇんず", "ぽけっともんすたーれじぇんず", "ぽけっともんすたーれじぇんずあるせうす"], image: "switch/pkl.webp" },
+        { display: "Pokémon LEGENDS Z-A", accept: ["ぽけもんれじぇんずぜっとえー", "ぽけっともんすたーれじぇんずぜっとえー"], image: "switch/pklz.webp" },
+        { display: "ポケットモンスター ソード", accept: ["ぽけっともんすたーそーど"], image: "switch/pks.webp" },
+        { display: "Pokémon UNITE", accept: ["ぽけもんゆないと"], image: "switch/pku.webp" },
+        { display: "ポケットモンスター バイオレット", accept: ["ぽけっともんすたーばいおれっと"], image: "switch/pkv.jpg" },
+        { display: "ペーパーマリオ オリガミキング", accept: ["ぺーぱーまりおおりがみきんぐ"], image: "switch/pmo.webp" },
+        { display: "ポケットモンスター Let's Go! ピカチュウ", accept: ["ぽけっともんすたーれっつごーぴかちゅう"], image: "switch/pmp.webp" },
+        { display: "ぽこ あ ポケモン", accept: ["ぽこあぽけもん"], image: "switch/poko.jpg" },
+        { display: "プリンセスピーチ Showtime!", accept: ["ぷりんせすぴーちしょーたいむ", "ぷりんせすぴーち"], image: "switch/pps.webp" },
+        { display: "ぷよぷよテトリス2", accept: ["ぷよぷよてとりす2", "ぷよぷよてとりす"], image: "switch/pt.webp" },
+        { display: "ロマンシング サガ2 リベンジオブザセブン", accept: ["ろまんしんぐさが2りべんじおぶせぶん", "ろまんしんぐさが2"], image: "switch/rs2.jpg" },
+        { display: "大乱闘スマッシュブラザーズ SPECIAL", accept: ["だいらんとうすまっしゅぶらざーずすぺしゃる", "すまっしゅぶらざーずすぺしゃる"], image: "switch/sbsp.webp" },
+        { display: "聖剣伝説3 TRIALS of MANA", accept: ["せいけんでんせつ3とらいあるずおぶまな", "せいけんでんせつ3"], image: "switch/sd3.webp" },
+        { display: "天穂のサクナヒメ", accept: ["てんすいのさくなひめ", "さくなひめ"], image: "switch/skn.webp" },
+        { display: "進め! キノピオ隊長", accept: ["すすめきのぴおたいちょう", "きのぴおたいちょう"], image: "switch/skp.webp" },
+        
+        { display: "世界樹の迷宮", accept: ["せかいじゅのめいきゅう"], image: "switch/sm.webp" },
+        { display: "スーパーマリオ オデッセイ", accept: ["すーぱーまりおおでっせい"], image: "switch/smo.jpg" },
+        { display: "スーパーマリオRPG", accept: ["すーぱーまりおあーるぴーじー", "まりおあーるぴーじー"], image: "switch/smrpg.jpg" },
+        { display: "スーパーマリオブラザーズワンダー", accept: ["すーぱーまりおぶらざーずわんだー", "まりおぶらざーずわんだー", "すーぱーまりおわんだー"], image: "switch/smw.webp" },
+        { display: "ソニックフロンティア", accept: ["そにっくふろんてぃあ"], image: "switch/snf.webp" },
+        { display: "スプラトゥーン2", accept: ["すぷらとぅーん2"], image: "switch/sp2.jpg" },
+        { display: "スプラトゥーン3", accept: ["すぷらとぅーん3"], image: "switch/sp3.jpg" },
+        { display: "月姫 -A piece of blue glass moon-", accept: ["つきひめ", "つきひめあぴーすおぶぶるーぐらすむーん"], image: "switch/th.webp" },
+        { display: "テイルズ オブ ヴェスペリア", accept: ["ているずおぶゔぇすぺりあ", "ているずおぶヴぇすぺりあ"], image: "switch/tov.webp" },
+        { display: "UNDERTALE", accept: ["あんだーている", "あんだーてーる"], image: "switch/ut.webp" },
+        { display: "ゼノブレイド2", accept: ["ぜのぶれいど2"], image: "switch/xb2.webp" },
+        { display: "ヨッシークラフトワールド", accept: ["よっしーくらふとわーるど"], image: "switch/ycw.webp" },
+        { display: "ゼルダの伝説 ブレス オブ ザ ワイルド", accept: ["ぜるだのでんせつぶれすおぶざわいるど", "ぶれすおぶざわいるど", "ぶれわい"], image: "switch/zbw.webp" },
+        { display: "ゼルダの伝説 知恵のかりもの", accept: ["ぜるだのでんせつちえのかりもの", "ちえのかりもの"], image: "switch/ztie.webp" },
+        { display: "ゼルダの伝説 ティアーズ オブ ザ キングダム", accept: ["ぜるだのでんせつてぃあーずおぶざきんぐだむ", "てぃあーずおぶざきんぐだむ", "てぃあきん"], image: "switch/ztk.jpg" },
     ];
 
     const HINT_LEVELS = [
-        { size: 0.02, score: 3 }, 
-        { size: 0.04, score: 2 }, 
-        { size: 0.08, score: 1 }, 
+        { size: 0.015, score: 3 }, 
+        { size: 0.025, score: 2 }, 
+        { size: 0.04, score: 1 }, 
         { size: 1.00, score: 0 }
     ];
 
