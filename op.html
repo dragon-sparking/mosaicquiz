@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>アニメOP・モザイククイズ</title>
+    <style>
+        :root {
+            --primary-blue: #007bff;
+            --bg-gray: #f5f5f5;
+            --border-color: #ddd;
+            --error-red: #ff4d4d;
+        }
+
+        body { font-family: sans-serif; text-align: center; background: var(--bg-gray); margin: 0; }
+        .container { max-width: 1200px; margin: 0 auto; background: #fff; padding: 20px; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+        
+        .header { width: 100%; border-bottom: 2px solid var(--primary-blue); margin-bottom: 20px; padding-bottom: 10px; }
+        .score-info { font-size: 1.1em; font-weight: bold; margin: 10px 0; }
+        
+        /* 注意文のスタイル修正: 枠を中央揃えに、文字は左揃えを維持 */
+        .rule-note { 
+            font-size: 0.9em; 
+            color: #444; 
+            background: #e9eef5; 
+            border: 1px solid #ccc; 
+            padding: 12px; 
+            border-radius: 5px; 
+            margin-bottom: 15px; 
+            line-height: 1.6; 
+            text-align: left; 
+            max-width: 400px; 
+            margin-left: auto; 
+            margin-right: auto; 
+        }
+        .rule-note strong.alert { color: red; font-weight: bold; }
+
+        .quiz-card { width: 100%; border: 1px solid var(--border-color); background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        
+        .canvas-container { width: 100%; height: 640px; background: #e9eef5; display: flex; align-items: center; justify-content: center; }
+        canvas { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+
+        .controls-row { 
+            padding: 15px; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            gap: 15px; 
+            background: #f9f9f9; 
+            border-bottom: 1px solid #eee;
+            flex-wrap: wrap;
+        }
+        
+        .hint-group { display: flex; gap: 5px; }
+        
+        .hint-btn { padding: 8px 12px; cursor: pointer; border: 1px solid #ccc; background: #eee; border-radius: 4px; font-size: 13px; }
+        .hint-btn.active { background: #ffc107; border-color: #ffa000; font-weight: bold; }
+        .hint-btn:disabled:not(.active) { opacity: 0.4; cursor: not-allowed; background: #ddd; }
+
+        .main-btn { padding: 8px 20px; cursor: pointer; border: none; border-radius: 4px; color: white; font-weight: bold; font-size: 13px; min-width: 120px; }
+        .giveup-btn { background: #999; }
+        .next-btn { background: var(--primary-blue); }
+
+        .input-area { padding: 20px; }
+        .card-input { width: 90%; max-width: 500px; padding: 12px; border: 2px solid #ddd; border-radius: 4px; font-size: 18px; outline: none; text-align: center; transition: border-color 0.2s; }
+        .card-input:focus { border-color: var(--primary-blue); }
+
+        /* エラー時の揺れと赤枠 */
+        .error-shake { border-color: var(--error-red) !important; animation: shake 0.4s ease-in-out; }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+
+        #message { height: 30px; margin: 15px 0; font-weight: bold; font-size: 1.2em; }
+        
+        .result-screen { display: none; text-align: center; padding: 40px 20px; }
+        .result-score { font-size: 3em; color: var(--primary-blue); margin: 20px 0; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h2>アニメOP・モザイククイズ</h2>
+        <div class="score-info">
+            スコア: <span id="totalScore">0</span> pt | 進行度: <span id="currentNum">1</span> / <span id="totalNum">--</span>
+        </div>
+        <div class="rule-note">
+            ・<strong class="alert">全てひらがなで答えてください</strong><br>
+            ・誤答、モザイク除去でポイントが減ります
+        </div>
+    </div>
+
+    <div id="quizArea" style="width: 100%;">
+        <div class="quiz-card">
+            <div class="canvas-container">
+                <canvas id="mainCanvas"></canvas>
+            </div>
+            
+            <div class="controls-row">
+                <div class="hint-group">
+                    <button class="hint-btn active" id="btn-0" onclick="updateMosaic(0)">むずかしい (3pt)</button>
+                    <button class="hint-btn" id="btn-1" onclick="updateMosaic(1)">ふつう (2pt)</button>
+                    <button class="hint-btn" id="btn-2" onclick="updateMosaic(2)">かんたん (1pt)</button>
+                </div>
+                <div class="action-group">
+                    <button class="main-btn giveup-btn" id="giveupBtn">わからない</button>
+                    <button class="main-btn next-btn" id="nextBtn" style="display:none;">次の問題へ</button>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <input type="text" id="answerInput" class="card-input" placeholder="作品名は？" autocomplete="off">
+                <div id="message"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="resultArea" class="result-screen">
+        <h3>全問終了！あなたのスコアは…</h3>
+        <div class="result-score"><span id="finalScore">0</span> / <span id="maxScore">0</span> pt</div>
+        <p>正解数: <span id="correctCount">0</span></p>
+        <button class="main-btn next-btn" onclick="location.reload()">もう一度挑戦する</button>
+    </div>
+</div>
+
+<script>
+    const quizData = [
+        { display: "日々は過ぎれど飯うまし", accept: ["ひびはすぎれどめしうまし", "ひびめし"], image: "op/hibi.jpg" },
+        { display: "ガールズバンドクライ", accept: ["がーるずばんどくらい", "がるくら"], image: "op/cry.jpg" },
+        { display: "BanG Dream! Ave Mujica", accept: ["ばんどりあヴぇむじか", "ばんどりあゔぇむじか", "ばんどりあべむじか", "あヴぇむじか", "あゔぇむじか", "あべむじか"], image: "op/ave.jpg" },
+        { display: "野原ひろし 昼メシの流儀", accept: ["のはらひろしひるめしのりゅうぎ"], image: "op/hiro.jpg" },
+        { display: "逃げ上手の若君", accept: ["にげじょうずのわかぎみ"], image: "op/nige.jpg" },
+        { display: "プリンセッション・オーケストラ", accept: ["ぷりんせっしょんおーけすとら", "ぷりんせっしょん"], image: "op/prin.jpg" },
+        { display: "瑠璃の宝石", accept: ["るりのほうせき"], image: "op/ruri.jpg" },
+        { display: "タコピーの原罪", accept: ["たこぴーのげんざい"], image: "op/tako.jpg" },
+        { display: "チェンソーマン", accept: ["ちぇんそーまん"], image: "op/csm.jpg" },
+        { display: "ドラゴンボールDAIMA", accept: ["どらごんぼーるだいま"], image: "op/daima.jpg" },
+        { display: "デリシャスパーティ♡プリキュア", accept: ["でりしゃすぱーてぃぷりきゅあ", "でぱぷり"], image: "op/depa.jpg" },
+        { display: "葬送のフリーレン", accept: ["そうそうのふりーれん", "ふりーれん"], image: "op/furi.jpg" },
+        { display: "薬屋のひとりごと", accept: ["くすりやのひとりごと"], image: "op/kusu.jpg" },
+        { display: "ラブライブ!サンシャイン!!", accept: ["らぶらいぶさんしゃいん"], image: "op/lovess.jpg" },
+        { display: "リコリス・リコイル", accept: ["りこりすりこいる", "りこりこ"], image: "op/ly.jpg" },
+        { display: "負けヒロインが多すぎる!", accept: ["まけひろいんがおおすぎる", "まけいん"], image: "op/make.jpg" },
+        { display: "メダリスト", accept: ["めだりすと"], image: "op/meda.jpg" },
+        { display: "しかのこのこのここしたんたん", accept: ["しかのこのこのここしたんたん"], image: "op/shika.jpg" },
+        { display: "機動戦士ガンダム 水星の魔女", accept: ["きどうせんしがんだむすいせいのまじょ", "すいせいのまじょ"], image: "op/sui.jpg" },
+        { display: "忍者と殺し屋のふたりぐらし", accept: ["にんじゃところしやのふたりぐらし", "にんころ"], image: "op/nin.jpg" },
+     ];
+
+    const HINT_LEVELS = [
+        { size: 0.02, score: 3 }, 
+        { size: 0.04, score: 2 }, 
+        { size: 0.08, score: 1 }, 
+        { size: 1.00, score: 0 }
+    ];
+
+    let shuffledIndices = [];
+    let currentIndex = 0;
+    let totalScore = 0;
+    let correctCount = 0;
+    let currentHintLevel = 0;
+    let isAnswered = false;
+    let currentImg = new Image();
+
+    const canvas = document.getElementById('mainCanvas');
+    const ctx = canvas.getContext('2d');
+    const inputEl = document.getElementById('answerInput');
+    const messageEl = document.getElementById('message');
+    const nextBtn = document.getElementById('nextBtn');
+    const giveupBtn = document.getElementById('giveupBtn');
+
+    function init() {
+        shuffledIndices = [...Array(quizData.length).keys()].sort(() => Math.random() - 0.5);
+        currentIndex = 0;
+        totalScore = 0;
+        correctCount = 0;
+        document.getElementById('totalNum').textContent = quizData.length;
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        isAnswered = false;
+        currentHintLevel = 0; 
+        inputEl.value = '';
+        inputEl.disabled = false;
+        inputEl.classList.remove('error-shake');
+        inputEl.placeholder = "作品名は？";
+        messageEl.textContent = '';
+        nextBtn.style.display = 'none';
+        nextBtn.textContent = "次の問題へ";
+        giveupBtn.style.display = 'inline-block';
+        
+        document.getElementById('currentNum').textContent = currentIndex + 1;
+        
+        const dataIndex = shuffledIndices[currentIndex];
+        currentImg = new Image();
+        currentImg.src = quizData[dataIndex].image;
+        currentImg.onload = () => updateMosaic(0);
+        
+        inputEl.focus();
+    }
+
+    function updateMosaic(level) {
+        if (isAnswered) return;
+        if (level < currentHintLevel) return;
+
+        currentHintLevel = level;
+        updateHintButtons();
+
+        const scale = HINT_LEVELS[level].size;
+        const w = currentImg.width * scale;
+        const h = currentImg.height * scale;
+        
+        canvas.width = w;
+        canvas.height = h;
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(currentImg, 0, 0, w, h);
+    }
+
+    function updateHintButtons() {
+        const btns = document.querySelectorAll('.hint-btn');
+        btns.forEach((b, i) => {
+            b.classList.toggle('active', i === currentHintLevel);
+            if (isAnswered) {
+                b.disabled = true;
+            } else {
+                b.disabled = (i < currentHintLevel);
+            }
+        });
+    }
+
+    inputEl.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') checkAnswer();
+    });
+
+    giveupBtn.onclick = () => reveal(false);
+
+    function checkAnswer() {
+        if (isAnswered) return;
+        const val = inputEl.value.trim();
+        if (!val) return;
+
+        const data = quizData[shuffledIndices[currentIndex]];
+        if (data.accept.includes(val)) {
+            correctCount++;
+            totalScore += HINT_LEVELS[currentHintLevel].score;
+            reveal(true);
+        } else {
+            inputEl.classList.add('error-shake');
+            messageEl.style.color = 'red';
+            messageEl.textContent = '不正解！';
+            
+            if (currentHintLevel < 2) {
+                updateMosaic(currentHintLevel + 1);
+            }
+            
+            setTimeout(() => { 
+                inputEl.classList.remove('error-shake');
+                if(!isAnswered) messageEl.textContent = ''; 
+            }, 1000);
+            
+            inputEl.value = '';
+        }
+    }
+
+    function reveal(isCorrect) {
+        isAnswered = true;
+        inputEl.disabled = true;
+        inputEl.classList.remove('error-shake');
+        giveupBtn.style.display = 'none';
+        nextBtn.style.display = 'inline-block';
+        
+        if (currentIndex === quizData.length - 1) {
+            nextBtn.textContent = "最終結果へ";
+        } else {
+            nextBtn.textContent = "次の問題へ";
+        }
+        
+        updateHintButtons(); 
+
+        canvas.width = currentImg.width;
+        canvas.height = currentImg.height;
+        ctx.imageSmoothingEnabled = true;
+        ctx.drawImage(currentImg, 0, 0);
+
+        const data = quizData[shuffledIndices[currentIndex]];
+        messageEl.style.color = isCorrect ? 'green' : '#666';
+        messageEl.textContent = isCorrect ? `正解！(+${HINT_LEVELS[currentHintLevel].score}pt)` : `正解は：${data.display}`;
+        
+        document.getElementById('totalScore').textContent = totalScore;
+        nextBtn.focus();
+    }
+
+    nextBtn.onclick = () => {
+        currentIndex++;
+        if (currentIndex < quizData.length) {
+            loadQuestion();
+        } else {
+            showFinalResult();
+        }
+    };
+
+    function showFinalResult() {
+        const maxScore = quizData.length * 3;
+        document.getElementById('quizArea').style.display = 'none';
+        document.getElementById('resultArea').style.display = 'block';
+        document.getElementById('finalScore').textContent = totalScore;
+        document.getElementById('maxScore').textContent = maxScore;
+        document.getElementById('correctCount').textContent = `${correctCount} / ${quizData.length}`;
+    }
+
+    init();
+</script>
+</body>
+</html>
