@@ -185,7 +185,7 @@
     const HINT_LEVELS = [
         { size: 0.02, score: 3 }, 
         { size: 0.04, score: 2 }, 
-        { size: 0.08, score: 1 }, 
+        { size: 0.06, score: 1 }, 
         { size: 1.00, score: 0 }
     ];
 
@@ -270,31 +270,39 @@
 
     giveupBtn.onclick = () => reveal(false);
 
-    function checkAnswer() {
+function checkAnswer() {
         if (isAnswered) return;
         const val = inputEl.value.trim();
         if (!val) return;
 
         const data = quizData[shuffledIndices[currentIndex]];
+        
+        // 正解判定
         if (data.accept.includes(val)) {
             correctCount++;
             totalScore += HINT_LEVELS[currentHintLevel].score;
             reveal(true);
         } else {
+            // 不正解時の処理
             inputEl.classList.add('error-shake');
             messageEl.style.color = 'red';
             messageEl.textContent = '不正解！';
             
-            if (currentHintLevel < 2) {
+            // 「かんたん (1pt)」の状態で間違えた場合
+            if (currentHintLevel >= 2) {
+                setTimeout(() => {
+                    reveal(false); // 強制的に答えを表示 (0pt)
+                }, 500);
+            } else {
+                // まだヒントの段階がある場合は次のヒント（モザイク除去）へ
                 updateMosaic(currentHintLevel + 1);
+                
+                setTimeout(() => { 
+                    inputEl.classList.remove('error-shake');
+                    if(!isAnswered) messageEl.textContent = ''; 
+                }, 1000);
+                inputEl.value = '';
             }
-            
-            setTimeout(() => { 
-                inputEl.classList.remove('error-shake');
-                if(!isAnswered) messageEl.textContent = ''; 
-            }, 1000);
-            
-            inputEl.value = '';
         }
     }
 
