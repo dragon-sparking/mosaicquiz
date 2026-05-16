@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>漫画＆ゲーム歴史並び替えクイズ（1990年代編）</title>
+    <style>
+        :root {
+            --bg-main: linear-gradient(180deg, #f8f9fa 0%, #e8eaed 100%);
+            --panel-bg: #ffffff;
+            --text-main: #1f1f1f;
+            --text-sub: #5f6368;
+            --border-light: #dadce0;
+            --manga-color: #1a73e8;
+            --game-color: #12b5cb;
+            --correct-bg: #e6f4ea;
+            --correct-border: #137333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, 'Hiragino Kaku Gothic ProN', 'Meiryo';
+            text-align: center;
+            background: var(--bg-main);
+            background-attachment: fixed;
+            color: var(--text-main);
+            margin: 0;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: var(--panel-bg);
+            border: 1px solid var(--border-light);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            padding: 30px;
+            border-radius: 16px;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-main);
+        }
+
+        .description {
+            color: var(--text-sub);
+            font-size: 0.95rem;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+
+        .columns-wrapper {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+        }
+        
+        .column {
+            flex: 1;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-light);
+        }
+
+        h2 {
+            margin-top: 0;
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: var(--text-main);
+            border-bottom: 1px solid var(--border-light);
+            padding-bottom: 12px;
+        }
+
+        .sortable-list {
+            min-height: 400px;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .item {
+            box-sizing: border-box;
+            background: #ffffff;
+            border: 1px solid var(--border-light);
+            margin: 12px 0;
+            padding: 0 16px;
+            cursor: grab;
+            border-radius: 8px;
+            transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+            user-select: none;
+            color: var(--text-main);
+            text-align: left;
+            font-size: 0.92rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            height: 48px;
+            display: flex;
+            align-items: center;
+        }
+        .item:active { cursor: grabbing; }
+        .item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-color: #bcc1c6;
+        }
+        .item.dragging { opacity: 0.3; background: #e8eaed; border: 1px dashed #9aa0a6; box-shadow: none; }
+        
+        .manga-item { border-left: 5px solid var(--manga-color); }
+        .game-item { border-left: 5px solid var(--game-color); }
+
+        .is-cleared {
+            border-color: var(--correct-border) !important;
+            background: var(--correct-bg) !important;
+            color: var(--correct-border) !important;
+            font-weight: bold;
+            box-shadow: none !important;
+        }
+
+        .controls { margin: 40px 0 10px 0; }
+        
+        .btn {
+            padding: 12px 32px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            background: var(--manga-color);
+            color: #ffffff; 
+            border: none;
+            border-radius: 24px;
+            font-weight: 500;
+            transition: background 0.2s, box-shadow 0.2s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+        }
+        .btn:hover {
+            background: #1557b0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        #result {
+            font-weight: 500;
+            font-size: 1.05rem;
+            line-height: 1.8;
+            margin-top: 25px;
+            white-space: pre-line;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>漫画＆ゲーム歴史並び替えクイズ（1990年代編）</h1>
+    <div class="description">
+        上から「古い順（時系列）」になるようにドラッグして並び替えてください。
+    </div>
+
+    <div class="columns-wrapper">
+        <div class="column">
+            <h2>漫画・アニメの歴史</h2>
+            <ul class="sortable-list" id="mangaList"></ul>
+        </div>
+        <div class="column">
+            <h2>ゲームの歴史</h2>
+            <ul class="sortable-list" id="gameList"></ul>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="btn" onclick="checkAnswers()">正誤判定</button>
+        <div id="result"></div>
+    </div>
+</div>
+
+<script>
+    const mangaData = [
+        { id: 1, year: 1990, month: 11, text: "『幽☆遊☆白書』第1話が掲載" },
+        { id: 2, year: 1991, month: 2, text: "空条承太郎が花京院の「魂」を勝手に賭ける" },
+        { id: 3, year: 1991, month: 7, text: "『DRAGON BALL』ナメック星編完結" },
+        { id: 4, year: 1992, month: 4, text: "三井寿「安西先生…!! バスケがしたいです……」" },
+        { id: 5, year: 1992, month: 9, text: "飛影「邪王炎殺黒龍波」を放ち右腕が使い物にならなくなる" },
+        { id: 6, year: 1992, month: 12, text: "アニメ『ちびまる子ちゃん』（第1期）最終回を迎える" },
+        { id: 7, year: 1993, month: 8, text: "アニメ『DRAGON BALL Z』オリジナルストーリー「あの世一武道会編」開幕" },
+        { id: 8, year: 1993, month: 11, text: "ポップがマトリフからメドローアを教わる" },
+        { id: 9, year: 1994, month: 11, text: "『名探偵コナン』「ピアノソナタ『月光』殺人事件」の開幕" },
+        { id: 10, year: 1994, month: 12, text: "ジャンプ史上最高の発行部数「653万部」を記録" },
+        { id: 11, year: 1995, month: 2, text: "豊玉高校との試合にて「あきらめたらそこで試合終了ですよ…？」" },
+        { id: 12, year: 1995, month: 7, text: "『新世紀エヴァンゲリオン』アニメ先行上映 コアなファンたちの間で話題に" },
+        { id: 13, year: 1996, month: 2, text: "『地獄先生ぬ〜べ〜』屈指のトラウマ回「ブキミちゃん」掲載" },
+        { id: 14, year: 1996, month: 6, text: "『SLAM DUNK』最終回を迎える「天才ですから」" },
+        { id: 15, year: 1996, month: 11, text: "『るろうに剣心 -明治剣客浪漫譚-』剣心が「天翔龍閃」を取得" },
+        { id: 16, year: 1997, month: 1, text: "週刊少年ジャンプ、ついに『週刊少年マガジン』に発行部数首位の座を明け渡す" },
+        { id: 17, year: 1998, month: 9, text: "キルアが解体屋ジョネスの心臓を抜き取る" },
+        { id: 18, year: 1998, month: 12, text: "ルフィ、過去最高にブチギレる「ルフィ……助けて……」「当たり前だ!!!!!」" },
+        { id: 19, year: 1999, month: 2, text: "シリーズ第1作目『おジャ魔女どれみ』放送開始" },
+        { id: 20, year: 1999, month: 11, text: "ナルト、波の国へ向かう" }
+    ];
+
+    const gameData = [
+        { id: 1, year: 1990, month: 11, text: "『スーパーファミコン』発売" },
+        { id: 2, year: 1991, month: 2, text: "『ストリートファイターII』がアーケードで稼働開始" },
+        { id: 3, year: 1991, month: 7, text: "『ソニック・ザ・ヘッジホッグ』発売" },
+        { id: 4, year: 1992, month: 4, text: "『星のカービィ』発売" },
+        { id: 5, year: 1992, month: 9, text: "『ドラゴンクエストV 天空の花嫁』発売" },
+        { id: 6, year: 1992, month: 12, text: "『ファイナルファンタジーV』発売" },
+        { id: 7, year: 1993, month: 8, text: "アメリカで世界初のTCG『Magic: The Gathering』が発売" },
+        { id: 8, year: 1993, month: 11, text: "『ロックマン6 史上最大の戦い!!』発売" },
+        { id: 9, year: 1994, month: 11, text: "『セガサターン』発売" },
+        { id: 10, year: 1994, month: 12, text: "『プレイステーション』発売" },
+        { id: 11, year: 1995, month: 2, text: "ドイツでボードゲーム『カタンの開拓者たち』発売" },
+        { id: 12, year: 1995, month: 7, text: "『バーチャルボーイ』発売" },
+        { id: 13, year: 1996, month: 2, text: "『ポケットモンスター 赤・緑』発売" },
+        { id: 14, year: 1996, month: 6, text: "『NINTENDO64』発売" },
+        { id: 15, year: 1996, month: 11, text: "『たまごっち』発売" },
+        { id: 16, year: 1997, month: 1, text: "『ファイナルファンタジーVII』発売" },
+        { id: 17, year: 1998, month: 9, text: "『ダンスダンスレボリューション』がアーケードで稼働開始" },
+        { id: 18, year: 1998, month: 12, text: "『遊☆戯☆王デュエルモンスターズ（ゲームボーイ）』発売" },
+        { id: 19, year: 1999, month: 2, text: "遊戯王初のブースターパック『遊☆戯☆王OCG Vol.1』発売" },
+        { id: 20, year: 1999, month: 11, text: "『ポケットモンスター 金・銀』発売" }
+    ];
+
+    let missCount = 0; // ★ 間違った回数をカウントする変数
+    let isGameActive = true; // クリア後にボタン連打でカウントが進むのを防ぐフラグ
+
+    function setupList(listId, data, itemClass) {
+        const list = document.getElementById(listId);
+        const shuffled = [...data].sort(() => Math.random() - 0.5);
+        
+        shuffled.forEach(item => {
+            const li = document.createElement('li');
+            li.className = `item ${itemClass}`;
+            li.draggable = true;
+            li.dataset.id = item.id;
+            li.textContent = item.text;
+
+            li.addEventListener('dragstart', () => li.classList.add('dragging'));
+            li.addEventListener('dragend', () => li.classList.remove('dragging'));
+            list.appendChild(li);
+        });
+
+        list.addEventListener('dragover', e => {
+            e.preventDefault();
+            const draggingItem = document.querySelector('.dragging');
+            if (!draggingItem || !list.contains(draggingItem)) return;
+
+            const nextSibling = getDragAfterElement(list, e.clientY);
+            if (nextSibling == null) {
+                list.appendChild(draggingItem);
+            } else {
+                list.insertBefore(draggingItem, nextSibling);
+            }
+        });
+    }
+
+    function getDragAfterElement(list, y) {
+        const draggableElements = [...list.querySelectorAll('.item:not(.dragging)')];
+
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - (box.top + box.height / 2);
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    function checkAnswers() {
+        if (!isGameActive) return; // すでにクリアしている場合は処理しない
+
+        const mangaItems = [...document.querySelectorAll('#mangaList .item')];
+        const gameItems = [...document.querySelectorAll('#gameList .item')];
+        
+        let mangaCorrectPos = 0;
+        let gameCorrectPos = 0;
+        let sideMatches = 0;
+
+        mangaItems.forEach((item, index) => {
+            if (parseInt(item.dataset.id) === index + 1) mangaCorrectPos++;
+        });
+        gameItems.forEach((item, index) => {
+            if (parseInt(item.dataset.id) === index + 1) gameCorrectPos++;
+        });
+
+        mangaItems.forEach((item, index) => {
+            if (item.dataset.id === gameItems[index].dataset.id) sideMatches++;
+        });
+
+        const resultDiv = document.getElementById('result');
+        const totalItems = mangaData.length;
+        
+        // すべての配置が正しいか判定
+        if(mangaCorrectPos === totalItems && gameCorrectPos === totalItems) {
+            isGameActive = false; // ゲーム終了
+            resultDiv.style.color = 'var(--correct-border)';
+            
+            // ★ 間違った回数（ミス回数）から難易度・評価テキストを決定
+            let evaluation = "";
+            if (missCount <= 2) {
+                evaluation = "🥇 【難易度：神】歴史の生き証人級！恐ろしいほどの知識量と記憶力です！";
+            } else if (missCount <= 7) {
+                evaluation = "🥈 【難易度：難解】年代記の学者級！1990年代のカルチャーを網羅していますね！";
+            } else {
+                evaluation = "🥉 【難易度：標準】苦難の末の開拓者級！じっくり粘り強く歴史を紐解きました！";
+            }
+
+            resultDiv.innerHTML = `【 判定結果 】\n` +
+            `漫画の正しい位置: ${mangaCorrectPos} / ${totalItems} 件\n` +
+            `ゲームの正しい位置: ${gameCorrectPos} / ${totalItems} 件\n` +
+            `左右の年代が一致している行: ${sideMatches} / ${totalItems} 行\n` +
+            `間違えた回数: ${missCount} 回\n\n` +
+            `🎉 PERFECT! 歴史のタイムラインが完成しました！ 🎉\n` + 
+            `${evaluation}`;
+
+            revealDates(mangaItems, mangaData);
+            revealDates(gameItems, gameData);
+        } else {
+            // ★ 不正解だった場合はミス回数を増やす
+            missCount++;
+            resultDiv.style.color = 'var(--text-main)';
+            resultDiv.textContent = `【 判定結果 】\n` +
+            `漫画の正しい位置: ${mangaCorrectPos} / ${totalItems} 件\n` +
+            `ゲームの正しい位置: ${gameCorrectPos} / ${totalItems} 件\n` +
+            `左右の年代が一致している行: ${sideMatches} / ${totalItems} 行\n` +
+            `間違えた回数: ${missCount} 回\n`;
+        }
+    }
+
+    function revealDates(domItems, originalData) {
+        domItems.forEach(item => {
+            const id = parseInt(item.dataset.id);
+            const matchedData = originalData.find(d => d.id === id);
+            if (matchedData) {
+                item.textContent = `[${matchedData.year}年${matchedData.month}月] ${matchedData.text}`;
+                item.classList.add('is-cleared');
+                item.draggable = false;
+            }
+        });
+    }
+
+    setupList('mangaList', mangaData, 'manga-item');
+    setupList('gameList', gameData, 'game-item');
+</script>
+
+</body>
+</html>
